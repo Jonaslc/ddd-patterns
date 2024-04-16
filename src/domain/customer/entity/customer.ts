@@ -54,7 +54,7 @@ export default class Customer extends AgreggateRoot {
   get Address(): Address {
     return this._address;
   }
-  
+
   changeAddress(address: Address) {
     this._address = address;
   }
