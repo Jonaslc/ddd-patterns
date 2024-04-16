@@ -111,6 +111,18 @@ describe("Order repository test", () => {
     customerUpdate.changeAddress(addressUpdate);
     await customerRepository.create(customerUpdate);
 
+    const product2 = new Product("124", "Product 2", 10);
+    await productRepository.create(product2);
+
+    const orderItem2 = new OrderItem(
+      "2",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    order.addItem(orderItem2);
     order.changeCustomerId(customerUpdate.id);
     await orderRepository.update(order);
 

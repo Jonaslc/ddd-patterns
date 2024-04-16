@@ -25,6 +25,12 @@ export default class Order {
     return this._items;
   }
 
+  addItem(newItem: OrderItem): void {
+    this._items.push(newItem);
+    this._total = this.total();
+    this.validate();
+  }
+
   changeCustomerId(customerId: string) {
     this._customerId = customerId;
     this.validate();
