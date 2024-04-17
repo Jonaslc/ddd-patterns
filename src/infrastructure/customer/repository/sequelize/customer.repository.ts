@@ -2,16 +2,8 @@ import Customer from "../../../../domain/customer/entity/customer";
 import Address from "../../../../domain/customer/value-object/address";
 import CustomerRepositoryInterface from "../../../../domain/customer/repository/customer-repository.interface";
 import CustomerModel from "./customer.model";
-import { TransactionInterface } from "../../../../domain/@shared/domain/transaction.interface";
 
 export default class CustomerRepository implements CustomerRepositoryInterface {
-
-  private transaction: TransactionInterface
-
-  public setTransaction(transaction: TransactionInterface): void {
-    this.transaction = transaction;
-  }
-
   async create(entity: Customer): Promise<void> {
     await CustomerModel.create({
       id: entity.id,
@@ -22,11 +14,7 @@ export default class CustomerRepository implements CustomerRepositoryInterface {
       city: entity.Address.city,
       active: entity.isActive(),
       rewardPoints: entity.rewardPoints,
-    },
-      {
-        transaction: this.transaction.getTransaction()
-      }
-    );
+    });
   }
 
   async update(entity: Customer): Promise<void> {
@@ -44,7 +32,6 @@ export default class CustomerRepository implements CustomerRepositoryInterface {
         where: {
           id: entity.id,
         },
-        transaction: this.transaction.getTransaction()
       }
     );
   }
@@ -57,7 +44,6 @@ export default class CustomerRepository implements CustomerRepositoryInterface {
           id,
         },
         rejectOnEmpty: true,
-        transaction: this.transaction.getTransaction()
       });
     } catch (error) {
       throw new Error("Customer not found");
@@ -75,9 +61,7 @@ export default class CustomerRepository implements CustomerRepositoryInterface {
   }
 
   async findAll(): Promise<Customer[]> {
-    const customerModels = await CustomerModel.findAll({
-      transaction: this.transaction.getTransaction()
-    });
+    const customerModels = await CustomerModel.findAll();
 
     const customers = customerModels.map((customerModels) => {
       let customer = new Customer(customerModels.id, customerModels.name);
