@@ -3,6 +3,12 @@ import Customer from "../../../../domain/customer/entity/customer";
 import Address from "../../../../domain/customer/value-object/address";
 import CustomerModel from "./customer.model";
 import CustomerRepository from "./customer.repository";
+import CustomerCreatedEvent from "../../../../domain/customer/event/customer-created.event";
+import CustomerAddressUpdatedEvent from "../../../../domain/customer/event/customer-address-updated.event";
+import EventDispatcher from "../../../../domain/@shared/event/event-dispatcher";
+import EnviaConsoleLog1Handler from "../../../../domain/customer/event/handler/envia-console-log-1.handler";
+import EnviaConsoleLog2Handler from "../../../../domain/customer/event/handler/envia-console-log-2.handler";
+import EnviaConsoleLogHandler from "../../../../domain/customer/event/handler/envia-console-log.handler";
 
 describe("Customer repository test", () => {
   let sequelize: Sequelize;
@@ -32,6 +38,20 @@ describe("Customer repository test", () => {
 
     const customerModel = await CustomerModel.findOne({ where: { id: "123" } });
 
+    const eventDispatcher = new EventDispatcher();
+    const eventHandler1 = new EnviaConsoleLog1Handler();
+    const eventHandler2 = new EnviaConsoleLog2Handler();
+    const spyEventHandler1 = jest.spyOn(eventHandler1, "handle");
+    const spyEventHandler2 = jest.spyOn(eventHandler2, "handle");
+
+    eventDispatcher.register("CustomerCreatedEvent", eventHandler1);
+    eventDispatcher.register("CustomerCreatedEvent", eventHandler2);
+
+    const customerCreatedEvent = new CustomerCreatedEvent({
+      name: customer.name,
+    });
+    eventDispatcher.notify(customerCreatedEvent);
+
     expect(customerModel.toJSON()).toStrictEqual({
       id: "123",
       name: customer.name,
@@ -42,6 +62,8 @@ describe("Customer repository test", () => {
       zipcode: address.zip,
       city: address.city,
     });
+    expect(spyEventHandler1).toHaveBeenCalled();
+    expect(spyEventHandler2).toHaveBeenCalled();
   });
 
   it("should update a customer", async () => {
@@ -55,6 +77,19 @@ describe("Customer repository test", () => {
     await customerRepository.update(customer);
     const customerModel = await CustomerModel.findOne({ where: { id: "123" } });
 
+    const eventDispatcher = new EventDispatcher();
+    const eventHandler = new EnviaConsoleLogHandler();
+    const spyEventHandler = jest.spyOn(eventHandler, "handle");
+
+    eventDispatcher.register("CustomerAddressUpdatedEvent", eventHandler);
+
+    const customerAddressUpdatedEvent = new CustomerAddressUpdatedEvent({
+      id: customer.id,
+      name: customer.name,
+      address: `${address.street} ${address.number}`,
+    });
+    eventDispatcher.notify(customerAddressUpdatedEvent);
+
     expect(customerModel.toJSON()).toStrictEqual({
       id: "123",
       name: customer.name,
@@ -65,6 +100,7 @@ describe("Customer repository test", () => {
       zipcode: address.zip,
       city: address.city,
     });
+    expect(spyEventHandler).toHaveBeenCalled();
   });
 
   it("should find a customer", async () => {
